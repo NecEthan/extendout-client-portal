@@ -5,6 +5,14 @@ import { useRouter } from "next/navigation";
 import { useDocuments, useUploadDocument } from "@/hooks/useDocuments";
 import { authClient, useSession } from "@/lib/auth-client";
 import { ApplicationRoutes } from "@/lib/applicationRoutes";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export default function HomeClient() {
   const router = useRouter();
@@ -27,33 +35,51 @@ export default function HomeClient() {
   }
 
   return (
-    <main style={{ padding: 32, maxWidth: 640, margin: "0 auto" }}>
-      <h1>Client Portal</h1>
-      <p>
-        Signed in as {sessionData?.user.email} ({sessionData?.user.portalRole})
-        {" "}
-        <button onClick={handleLogout}>Log out</button>
-      </p>
+    <main className="mx-auto flex max-w-2xl flex-col gap-6 p-8">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Client Portal</h1>
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+          <span>
+            {sessionData?.user.email} ({sessionData?.user.portalRole})
+          </span>
+          <Button variant="outline" size="sm" onClick={handleLogout}>
+            Log out
+          </Button>
+        </div>
+      </div>
 
-      <form ref={formRef} onSubmit={handleSubmit}>
-        <input type="file" name="file" required />
-        <input type="hidden" name="projectId" value="" />
-        <input type="hidden" name="uploadedById" value="" />
-        <button type="submit" disabled={uploadMutation.isPending}>
-          {uploadMutation.isPending ? "Uploading..." : "Upload document"}
-        </button>
-      </form>
+      <Card>
+        <CardHeader>
+          <CardTitle>Upload document</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form ref={formRef} onSubmit={handleSubmit} className="flex items-center gap-3">
+            <Input type="file" name="file" required className="max-w-xs" />
+            <input type="hidden" name="projectId" value="" />
+            <input type="hidden" name="uploadedById" value="" />
+            <Button type="submit" disabled={uploadMutation.isPending}>
+              {uploadMutation.isPending ? "Uploading..." : "Upload"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
 
-      <h2>Documents</h2>
-      {isLoading && <p>Loading...</p>}
-      {isError && <p>Failed to load documents.</p>}
-      <ul>
-        {documents?.map((doc) => (
-          <li key={doc.id}>
-            {doc.fileName} ({doc.sizeBytes} bytes)
-          </li>
-        ))}
-      </ul>
+      <Card>
+        <CardHeader>
+          <CardTitle>Documents</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoading && <p className="text-sm text-muted-foreground">Loading...</p>}
+          {isError && <p className="text-sm text-destructive">Failed to load documents.</p>}
+          <ul className="flex flex-col gap-2">
+            {documents?.map((doc) => (
+              <li key={doc.id} className="text-sm">
+                {doc.fileName} ({doc.sizeBytes} bytes)
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
     </main>
   );
 }
