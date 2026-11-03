@@ -1,0 +1,45 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id @default(uuid())
+  email     String     @unique
+  name      String
+  role      Role       @default(CLIENT)
+  createdAt DateTime   @default(now())
+  documents Document[]
+  projects  Project[]
+}
+
+model Project {
+  id        String     @id @default(uuid())
+  name      String
+  client    User       @relation(fields: [clientId], references: [id])
+  clientId  String
+  documents Document[]
+  createdAt DateTime   @default(now())
+}
+
+model Document {
+  id         String   @id @default(uuid())
+  fileName   String
+  filePath   String
+  mimeType   String
+  sizeBytes  Int
+  project    Project  @relation(fields: [projectId], references: [id])
+  projectId  String
+  uploadedBy User     @relation(fields: [uploadedById], references: [id])
+  uploadedById String
+  createdAt  DateTime @default(now())
+}
+
+enum Role {
+  ADMIN
+  CLIENT
+}
