@@ -13,6 +13,12 @@ export const auth = betterAuth({
     expiresIn: 60 * 60 * 24 * 400, // 400 days, browser Max-Age ceiling
     updateAge: 60 * 60 * 24, // sliding: refresh if used within last day
   },
+  rateLimit: {
+    customRules: {
+      "/sign-in/*": { window: 10, max: 30 },
+      "/change-password": { window: 10, max: 30 },
+    },
+  },
   user: {
     additionalFields: {
       // named portalRole, not role: the admin plugin owns its own `role` column
