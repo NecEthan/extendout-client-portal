@@ -1,6 +1,25 @@
 # Client Portal
 
-Next.js (App Router, TS) + Postgres (Prisma) + TanStack Query.
+Next.js (App Router, TS) + Postgres (Prisma) + TanStack Query + better-auth.
+
+## Auth model
+
+No public signup. First account is created once via the bootstrap endpoint
+(only works while the `User` table is empty):
+
+```
+curl -X POST http://localhost:3000/api/admin/bootstrap \
+  -H "Content-Type: application/json" \
+  -d '{"email":"owner@example.com","name":"Owner","password":"<temp password>"}'
+```
+
+That account is ADMIN with `requirePasswordChange: false`. From then on, the
+ADMIN creates CLIENT/ADMIN accounts via `POST /api/admin/users`
+(`{ email, name, role, password }`, session-gated to `portalRole: "ADMIN"`) —
+those accounts get `requirePasswordChange: true` and are forced to
+`/change-password` on first login. Sessions use a 400-day sliding expiry
+(`src/lib/auth.ts`); an ADMIN can revoke a user's sessions via
+`DELETE /api/admin/users/:id/sessions`.
 
 ## Local dev (no docker)
 

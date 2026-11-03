@@ -7,6 +7,9 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# prisma.config.ts just needs DATABASE_URL to resolve, not a live connection;
+# the real value comes from docker-compose at container start, not at build time.
+ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
 RUN npx prisma generate
 RUN npm run build
 

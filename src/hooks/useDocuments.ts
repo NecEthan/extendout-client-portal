@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ApiRoutes } from "@/lib/apiRoutes";
 
 export interface Document {
   id: string;
@@ -17,7 +18,7 @@ export function useDocuments() {
   return useQuery({
     queryKey: ["documents"],
     queryFn: async (): Promise<Document[]> => {
-      const res = await fetch("/api/documents");
+      const res = await fetch(ApiRoutes.documents);
       if (!res.ok) throw new Error("Failed to load documents");
       return res.json();
     },
@@ -29,7 +30,7 @@ export function useUploadDocument() {
 
   return useMutation({
     mutationFn: async (formData: FormData): Promise<Document> => {
-      const res = await fetch("/api/documents", {
+      const res = await fetch(ApiRoutes.documents, {
         method: "POST",
         body: formData,
       });
