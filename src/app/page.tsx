@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { ApplicationRoutes } from "@/lib/applicationRoutes";
-import HomeClient from "@/app/home-client";
+import HomeClient from "@/app/home";
 
 export default async function Home() {
   const requestHeaders = await headers();
