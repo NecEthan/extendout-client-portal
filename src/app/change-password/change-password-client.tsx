@@ -4,7 +4,7 @@ import { useState, type SubmitEvent } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { ApplicationRoutes } from "@/lib/applicationRoutes";
-import { ApiRoutes } from "@/lib/apiRoutes";
+import { useCompletePasswordChange } from "@/hooks/useCompletePasswordChange";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +23,7 @@ export default function ChangePasswordClient() {
   const [newPassword, setNewPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const completePasswordChange = useCompletePasswordChange();
 
   async function handleSubmit(e: SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -41,10 +42,11 @@ export default function ChangePasswordClient() {
       return;
     }
 
-    await fetch(ApiRoutes.completePasswordChange, { method: "POST" });
-
-    setIsSubmitting(false);
-    router.push(ApplicationRoutes.home);
+    completePasswordChange.mutate(undefined, {
+      onSuccess: () => router.push(ApplicationRoutes.home),
+      onError: (mutationError) => setError(mutationError.message),
+      onSettled: () => setIsSubmitting(false),
+    });
   }
 
   return (

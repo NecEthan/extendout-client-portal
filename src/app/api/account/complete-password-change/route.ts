@@ -1,18 +1,18 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { apiError } from "@/lib/apiResponse";
+import { requireSession } from "@/lib/session";
 
-export async function POST(req: NextRequest) {
-  const session = await auth.api.getSession({ headers: req.headers });
+export async function POST() {
+  try {
+    const session = await requireSession();
 
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: { requirePasswordChange: false },
+    });
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    return apiError(error);
   }
-
-  await prisma.user.update({
-    where: { id: session.user.id },
-    data: { requirePasswordChange: false },
-  });
-
-  return NextResponse.json({ ok: true });
 }

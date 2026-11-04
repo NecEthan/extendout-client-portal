@@ -1,38 +1,34 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { apiError } from "@/lib/apiResponse";
+import { requireAdmin } from "@/lib/session";
+import type { RouteParams } from "@/types/routeParams-type";
 
-type RouteParams = { params: Promise<{ id: string }> };
+export async function GET(_req: Request, { params }: RouteParams) {
+  try {
+    await requireAdmin();
 
-async function requireAdmin(req: NextRequest) {
-  const session = await auth.api.getSession({ headers: req.headers });
-  if (!session || session.user.portalRole !== "ADMIN") return null;
-  return session;
+    const { id } = await params;
+    const sessions = await prisma.session.findMany({
+      where: { userId: id },
+      orderBy: { createdAt: "desc" },
+      // Never return `token` — it's the session credential.
+      select: { id: true, createdAt: true, expiresAt: true, ipAddress: true, userAgent: true },
+    });
+    return NextResponse.json(sessions);
+  } catch (error) {
+    return apiError(error);
+  }
 }
 
-export async function GET(req: NextRequest, { params }: RouteParams) {
-  const isAdmin = await requireAdmin(req);
-  if (!isAdmin) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+export async function DELETE(_req: Request, { params }: RouteParams) {
+  try {
+    await requireAdmin();
+
+    const { id } = await params;
+    await prisma.session.deleteMany({ where: { userId: id } });
+    return NextResponse.json({ revoked: true });
+  } catch (error) {
+    return apiError(error);
   }
-
-  const { id } = await params;
-  const sessions = await prisma.session.findMany({
-    where: { userId: id },
-    orderBy: { createdAt: "desc" },
-  });
-
-  return NextResponse.json(sessions);
-}
-
-export async function DELETE(req: NextRequest, { params }: RouteParams) {
-  const isAdmin = await requireAdmin(req);
-  if (!isAdmin) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
-  const { id } = await params;
-  await prisma.session.deleteMany({ where: { userId: id } });
-
-  return NextResponse.json({ revoked: true });
 }

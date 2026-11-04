@@ -1,13 +1,12 @@
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+"use client";
+
 import { FileText } from "lucide-react";
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { ApplicationRoutes } from "@/lib/applicationRoutes";
+import { useProjects } from "@/hooks/useProjects";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-function formatDate(date: Date) {
-  return date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+function formatDate(date: string) {
+  return new Date(date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 }
 
 function formatBytes(bytes: number) {
@@ -15,21 +14,20 @@ function formatBytes(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-export default async function Home() {
-  const requestHeaders = await headers();
-  const session = await auth.api.getSession({ headers: requestHeaders });
-  if (!session) redirect(ApplicationRoutes.login);
+export default function Home() {
+  const { data: projects, isPending, error } = useProjects();
 
-  const projects = await prisma.project.findMany({
-    orderBy: { createdAt: "desc" },
-    include: {
-      client: { select: { name: true } },
-      documents: {
-        orderBy: { createdAt: "desc" },
-        include: { uploadedBy: { select: { name: true } } },
-      },
-    },
-  });
+  if (isPending) {
+    return <p className="text-sm text-muted-foreground">Loading projects...</p>;
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertDescription>{error.message}</AlertDescription>
+      </Alert>
+    );
+  }
 
   return (
     <div className="flex max-w-4xl flex-col gap-6">
@@ -40,11 +38,7 @@ export default async function Home() {
         </p>
       </div>
 
-      {projects.length === 0 && (
-        <p className="text-sm text-muted-foreground">
-          No projects yet.
-        </p>
-      )}
+      {projects.length === 0 && <p className="text-sm text-muted-foreground">No projects yet.</p>}
 
       {projects.map((project) => (
         <Card key={project.id}>

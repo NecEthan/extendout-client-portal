@@ -1,36 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { apiError } from "@/lib/apiResponse";
+import { ValidationError } from "@/lib/errors";
+import { requireAdmin } from "@/lib/session";
+
+const ROLES = ["ADMIN", "CLIENT", "BUILDER"] as const;
 
 export async function POST(req: NextRequest) {
-  const session = await auth.api.getSession({ headers: req.headers });
+  try {
+    await requireAdmin();
 
-  if (!session || session.user.portalRole !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const body = await req.json();
+    const { email, name, password, role } = body;
+    if (
+      typeof email !== "string" ||
+      typeof name !== "string" ||
+      typeof password !== "string" ||
+      !ROLES.includes(role)
+    ) {
+      throw new ValidationError("email, name, password are required and role must be ADMIN, CLIENT or BUILDER");
+    }
+
+    // Through Better Auth so the password is hashed and the Account row is created.
+    const created = await auth.api.createUser({
+      body: {
+        email,
+        name,
+        password,
+        data: { portalRole: role, requirePasswordChange: true },
+      },
+    });
+    return NextResponse.json({ id: created.user.id, email: created.user.email }, { status: 201 });
+  } catch (error) {
+    return apiError(error);
   }
-
-  const body = await req.json();
-  const { email, name, role, password } = body;
-
-  if (
-    typeof email !== "string" ||
-    typeof name !== "string" ||
-    typeof password !== "string" ||
-    (role !== "ADMIN" && role !== "CLIENT" && role !== "BUILDER")
-  ) {
-    return NextResponse.json(
-      { error: "email, name, password are required and role must be ADMIN, CLIENT or BUILDER" },
-      { status: 400 },
-    );
-  }
-
-  const created = await auth.api.createUser({
-    body: {
-      email,
-      name,
-      password,
-      data: { portalRole: role, requirePasswordChange: true },
-    },
-  });
-
-  return NextResponse.json({ id: created.user.id, email: created.user.email }, { status: 201 });
 }
