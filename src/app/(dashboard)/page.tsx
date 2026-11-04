@@ -2,7 +2,6 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { ApplicationRoutes } from "@/lib/applicationRoutes";
-import HomeClient from "@/app/home";
 
 export default async function Home() {
   const requestHeaders = await headers();
@@ -16,5 +15,5 @@ export default async function Home() {
     redirect(ApplicationRoutes.changePassword);
   }
 
-  return <HomeClient />;
+  return null;
 }

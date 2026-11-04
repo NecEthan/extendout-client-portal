@@ -1,8 +1,11 @@
 "use client";
 
 import { Home, LogOut } from "lucide-react";
+import { useLogout } from "@/hooks/useLogout";
 
-export function Sidebar({ onLogout }: { onLogout: () => void }) {
+export function Sidebar() {
+  const logout = useLogout();
+
   return (
     <aside className="flex h-screen w-64 shrink-0 flex-col justify-between bg-[#0a0a0a] px-4 py-6 text-white">
       <div>
@@ -22,7 +25,7 @@ export function Sidebar({ onLogout }: { onLogout: () => void }) {
       </div>
 
       <button
-        onClick={onLogout}
+        onClick={logout}
         className="flex items-center gap-3 px-2 text-sm font-medium text-white/60 hover:text-white"
       >
         <LogOut className="h-4 w-4" />
