@@ -7,36 +7,36 @@ datasource db {
 }
 
 model User {
-  id                   String     @id @default(uuid())
-  email                String     @unique
-  name                 String
-  emailVerified        Boolean    @default(false)
-  image                String?
-  role                 String?    // better-auth admin plugin's own field ("user"/"admin"), unused by app logic
-  portalRole           Role       @default(CLIENT)
-  requirePasswordChange Boolean   @default(true)
-  banned               Boolean?
-  banReason            String?
-  banExpires           DateTime?
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
-  documents            Document[]
-  projects             Project[]
-  sessions             Session[]
-  accounts             Account[]
+  id                    String     @id @default(uuid())
+  email                 String     @unique
+  name                  String
+  emailVerified         Boolean    @default(false)
+  image                 String?
+  role                  String? // better-auth admin plugin's own field ("user"/"admin"), unused by app logic
+  portalRole            Role       @default(CLIENT)
+  requirePasswordChange Boolean    @default(true)
+  banned                Boolean?
+  banReason             String?
+  banExpires            DateTime?
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
+  documents             Document[]
+  memberships           Member[]
+  sessions              Session[]
+  accounts              Account[]
 }
 
 model Session {
-  id        String   @id @default(uuid())
-  token     String   @unique
-  expiresAt DateTime
-  ipAddress String?
-  userAgent String?
+  id             String   @id @default(uuid())
+  token          String   @unique
+  expiresAt      DateTime
+  ipAddress      String?
+  userAgent      String?
   impersonatedBy String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Account {
@@ -68,10 +68,22 @@ model Verification {
 model Project {
   id        String     @id @default(uuid())
   name      String
-  client    User       @relation(fields: [clientId], references: [id])
-  clientId  String
   documents Document[]
+  members   Member[]
   createdAt DateTime   @default(now())
+}
+
+// Link table: which users (clients, builders) belong to which projects.
+model Member {
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([userId, projectId])
+  @@index([projectId])
+  @@map("members")
 }
 
 model Document {

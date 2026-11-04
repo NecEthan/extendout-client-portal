@@ -2,16 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { apiError } from "@/lib/apiResponse";
 import { ValidationError } from "@/lib/errors";
-import { requireSession } from "@/lib/session";
+import { requireAdmin, requireSession } from "@/lib/session";
 
 export async function GET() {
   try {
-    await requireSession();
+    const session = await requireSession();
+
+    const where =
+      session.user.portalRole === "ADMIN" ? {} : { members: { some: { userId: session.user.id } } };
 
     const projects = await prisma.project.findMany({
+      where,
       orderBy: { createdAt: "desc" },
       include: {
-        client: { select: { name: true } },
         documents: {
           orderBy: { createdAt: "desc" },
           include: { uploadedBy: { select: { name: true } } },
@@ -26,15 +29,15 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    await requireSession();
+    await requireAdmin();
 
     const body = await req.json();
-    const { name, clientId } = body;
-    if (typeof name !== "string" || typeof clientId !== "string") {
-      throw new ValidationError("name and clientId are required");
+    const { name } = body;
+    if (typeof name !== "string" || name.trim() === "") {
+      throw new ValidationError("name is required");
     }
 
-    const project = await prisma.project.create({ data: { name, clientId } });
+    const project = await prisma.project.create({ data: { name: name.trim() } });
     return NextResponse.json(project, { status: 201 });
   } catch (error) {
     return apiError(error);

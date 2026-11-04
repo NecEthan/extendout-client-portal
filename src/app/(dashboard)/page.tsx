@@ -38,7 +38,7 @@ export default function Home() {
           <CardHeader>
             <CardTitle>{project.name}</CardTitle>
             <CardDescription>
-              {project.client.name} · Created {formatDate(project.createdAt)}
+              Created {formatDate(project.createdAt)}
             </CardDescription>
           </CardHeader>
           <CardContent>

@@ -1,9 +1,23 @@
 "use client";
 
-import { Home, LogOut } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { FolderKanban, Home, LogOut } from "lucide-react";
 import { useLogout } from "@/hooks/useLogout";
+import { ApplicationRoutes } from "@/lib/applicationRoutes";
+import { cn } from "@/lib/utils";
+
+const navItems = [
+  { label: "Home", href: ApplicationRoutes.home, icon: Home },
+  { label: "Projects", href: ApplicationRoutes.projects, icon: FolderKanban },
+];
+
+function isActive(pathname: string, href: string) {
+  return href === ApplicationRoutes.home ? pathname === href : pathname.startsWith(href);
+}
 
 export function Sidebar() {
+  const pathname = usePathname();
   const logout = useLogout();
 
   return (
@@ -17,10 +31,21 @@ export function Sidebar() {
         </div>
 
         <nav className="flex flex-col gap-1">
-          <button className="flex items-center gap-3 rounded-lg bg-primary px-3 py-2.5 text-sm font-medium text-primary-foreground">
-            <Home className="h-4 w-4" />
-            Home
-          </button>
+          {navItems.map(({ label, href, icon: Icon }) => (
+            <Link
+              key={href}
+              href={href}
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium",
+                isActive(pathname, href)
+                  ? "bg-primary text-primary-foreground"
+                  : "text-white/70 hover:bg-white/5 hover:text-white",
+              )}
+            >
+              <Icon className="h-4 w-4" />
+              {label}
+            </Link>
+          ))}
         </nav>
       </div>
 

@@ -16,20 +16,21 @@ const users: { email: string; name: string; role: Role }[] = [
   { email: "tom@example.com", name: "Tom Harris", role: "BUILDER" },
 ];
 
-const projects: { name: string; clientEmail: string; documents: string[] }[] = [
+// `members` = users who can see the project (admins see everything regardless).
+const projects: { name: string; members: string[]; documents: string[] }[] = [
   {
     name: "Rear Kitchen Extension",
-    clientEmail: "sarah@example.com",
+    members: ["sarah@example.com", "tom@example.com"],
     documents: ["Project Brief.pdf", "Kitchen Layout v2.png", "Building Regs Approval.pdf"],
   },
   {
     name: "Garage Conversion",
-    clientEmail: "sarah@example.com",
+    members: ["sarah@example.com"],
     documents: ["Planning Application.pdf"],
   },
   {
     name: "Loft Conversion",
-    clientEmail: "james@example.com",
+    members: ["james@example.com", "tom@example.com"],
     documents: ["Loft Survey.pdf", "Dormer Drawings.docx"],
   },
 ];
@@ -67,14 +68,20 @@ async function main() {
 
   const admin = byEmail.get("test@gmail.com")!;
 
-  console.log("Seeding projects + documents...");
-  for (const { name, clientEmail, documents } of projects) {
-    const client = byEmail.get(clientEmail)!;
-
-    let project = await prisma.project.findFirst({ where: { name, clientId: client.id } });
+  for (const { name, members, documents } of projects) {
+    let project = await prisma.project.findFirst({ where: { name } });
     if (!project) {
-      project = await prisma.project.create({ data: { name, clientId: client.id } });
+      project = await prisma.project.create({ data: { name } });
       console.log(`  + project ${name}`);
+    }
+
+    for (const memberEmail of members) {
+      const member = byEmail.get(memberEmail)!;
+      const memberKey = { userId: member.id, projectId: project.id };
+      const exists = await prisma.member.findUnique({ where: { userId_projectId: memberKey } });
+      if (exists) continue;
+
+      await prisma.member.create({ data: memberKey });
     }
 
     for (const fileName of documents) {
@@ -92,11 +99,9 @@ async function main() {
           uploadedById: admin.id,
         },
       });
-      console.log(`  + document ${fileName}`);
     }
   }
 
-  console.log(`Done. All seeded users log in with password "${PASSWORD}".`);
 }
 
 main()
