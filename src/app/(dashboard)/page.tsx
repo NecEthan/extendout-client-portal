@@ -4,15 +4,8 @@ import { FileText } from "lucide-react";
 import { useProjects } from "@/hooks/useProjects";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-
-function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-}
-
-function formatBytes(bytes: number) {
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
+import { formatDate } from "@/lib/formatDate";
+import { formatBytes } from "@/lib/formatBytes";
 
 export default function Home() {
   const { data: projects, isPending, error } = useProjects();
