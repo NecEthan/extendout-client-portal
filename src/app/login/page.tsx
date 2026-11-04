@@ -40,7 +40,14 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
+    <main className="flex min-h-screen flex-col items-center justify-center gap-8 p-4">
+      <div className="text-center">
+        <div className="text-3xl font-extrabold tracking-tight">
+          EXtend<span className="text-primary">out</span>
+        </div>
+        <div className="text-sm text-muted-foreground">Client Portal</div>
+      </div>
+
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle>Log in</CardTitle>
