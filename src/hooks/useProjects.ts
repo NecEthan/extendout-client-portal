@@ -9,7 +9,7 @@ export function useProjects() {
   return useQuery({
     queryKey: ["projects"],
     queryFn: async () => {
-      const { data } = await axios.get<Project[]>(ApiRoutes.projects);
+      const { data } = await axios.get<Project[]>(ApiRoutes.projects.list);
       return data;
     },
   });

@@ -4,11 +4,12 @@ Next.js (App Router, TS) + Postgres (Prisma) + TanStack Query + better-auth.
 
 ## Auth model
 
-No public signup. First account is created once via the bootstrap endpoint
-(only works while the `User` table is empty):
+No public signup. The first account is created via the create-admin endpoint, which
+is open only while the `User` table is empty. After that it requires an ADMIN session,
+and admins can use it to create as many further admins as they need:
 
 ```
-curl -X POST http://localhost:3000/api/admin/bootstrap \
+curl -X POST http://localhost:3000/api/admin/create-admin \
   -H "Content-Type: application/json" \
   -d '{"email":"owner@example.com","name":"Owner","password":"<temp password>"}'
 ```

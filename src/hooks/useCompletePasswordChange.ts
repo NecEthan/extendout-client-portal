@@ -8,7 +8,7 @@ import type { CompletePasswordChangeResponse } from "@/interfaces/account-interf
 export function useCompletePasswordChange() {
   return useMutation({
     mutationFn: async () => {
-      const { data } = await axios.post<CompletePasswordChangeResponse>(ApiRoutes.completePasswordChange);
+      const { data } = await axios.post<CompletePasswordChangeResponse>(ApiRoutes.auth.completePasswordChange);
       return data;
     },
   });

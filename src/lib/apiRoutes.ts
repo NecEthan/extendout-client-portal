@@ -1,9 +1,20 @@
 export const ApiRoutes = {
-  authBase: "/api/auth",
-  adminBootstrap: "/api/admin/bootstrap",
-  adminUsers: "/api/admin/users",
-  adminUserSessions: (userId: string) => `/api/admin/users/${userId}/sessions`,
-  completePasswordChange: "/api/account/complete-password-change",
-  documents: "/api/documents",
-  projects: "/api/projects",
+  auth: {
+    betterAuth: "/api/auth",
+    completePasswordChange: "/api/account/complete-password-change",
+  },
+  users: {
+    create: "/api/admin/users",
+    createAdmin: "/api/admin/create-admin",
+    listSessions: (userId: string) => `/api/admin/users/${userId}/sessions`,
+    revokeSessions: (userId: string) => `/api/admin/users/${userId}/sessions`,
+  },
+  projects: {
+    list: "/api/projects",
+    create: "/api/projects",
+  },
+  documents: {
+    list: "/api/documents",
+    upload: "/api/documents",
+  },
 };

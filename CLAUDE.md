@@ -34,9 +34,11 @@ client component ──useX() hook──▶ /api/x route handler ──▶ Prism
 
 Auth: `src/proxy.ts` runs on pages only (not `/api`) and just checks a session cookie
 exists, redirecting to `/login` if not. Real validation is `requireSession()` in each
-route handler.
+route handler. For pages, `src/app/(dashboard)/layout.tsx` (a server component) validates the
+session and redirects to `/login` (invalid/expired) or `/change-password` (`requirePasswordChange`).
+That session check is the only server-side fetching allowed in pages/layouts.
 
-Exceptions: `api/auth/[...all]` (Better Auth), `api/admin/bootstrap` (public, first-user only),
+Exceptions: `api/auth/[...all]` (Better Auth), `api/admin/create-admin` (public only while there are no users, admin-only after),
 and the auth pages (`login`, `change-password`) don't follow this pattern.
 
 Client requests: never call `fetch()` or `axios` from components. Requests to our `/api` routes go
