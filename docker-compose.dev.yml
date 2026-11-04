@@ -1,0 +1,64 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: portal
+      POSTGRES_PASSWORD: portal
+      POSTGRES_DB: portal
+    ports:
+      - "5544:5432"
+    volumes:
+      - db_data_dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U portal -d portal"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://portal:portal@db:5432/portal
+      UPLOAD_DIR: /app/uploads
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-dev-secret-change-me}
+      BETTER_AUTH_URL: http://localhost:3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - uploads_data_dev:/app/uploads
+    # Run with: docker compose -f docker-compose.dev.yml up --watch
+    # Source edits (incl. git stash/checkout) are synced into the container
+    # and picked up by Next's hot reload — no rebuild or restart needed.
+    develop:
+      watch:
+        - action: rebuild
+          path: package.json
+        - action: rebuild
+          path: package-lock.json
+        - action: sync+restart
+          path: prisma/schema.prisma
+          target: /app/prisma/schema.prisma
+        - action: sync
+          path: .
+          target: /app
+          ignore:
+            - node_modules/
+            - .next/
+            - .git/
+            - uploads/
+            - test-results/
+            - playwright-test/
+            - package.json
+            - package-lock.json
+            - prisma/schema.prisma
+
+volumes:
+  db_data_dev:
+  uploads_data_dev:
