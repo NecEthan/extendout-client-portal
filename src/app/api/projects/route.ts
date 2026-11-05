@@ -13,6 +13,7 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
       include: {
         documents: {
+          where: { status: "READY" },
           orderBy: { createdAt: "desc" },
           include: { uploadedBy: { select: { name: true } } },
         },

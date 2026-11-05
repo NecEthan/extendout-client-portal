@@ -38,6 +38,23 @@ export class ProjectPage {
     return this.page.getByText("No documents yet.");
   }
 
+  get uploadButton() {
+    return this.page.getByRole("button", { name: "Upload" });
+  }
+
+  get uploadStatus() {
+    return this.page.getByRole("status");
+  }
+
+  async upload(fileName: string, content = "e2e test file") {
+    await this.page.getByLabel("File").setInputFiles({
+      name: fileName,
+      mimeType: "text/plain",
+      buffer: Buffer.from(content),
+    });
+    await this.uploadButton.click();
+  }
+
   get rows() {
     return this.page.locator("tbody tr");
   }
@@ -48,5 +65,25 @@ export class ProjectPage {
 
   async getViaApi(projectId: string) {
     return this.page.request.get(`/api/projects/${projectId}`);
+  }
+
+  // Step 1 of an upload: ask for a presigned URL.
+  async requestUploadViaApi(projectId: string, file: { fileName: string; sizeBytes: number }) {
+    return this.page.request.post(`/api/projects/${projectId}/documents`, {
+      data: { ...file, mimeType: "text/plain" },
+    });
+  }
+
+  // Step 2: PUT the bytes straight to the bucket.
+  async putToBucket(uploadUrl: string, content: string) {
+    return this.page.request.put(uploadUrl, {
+      data: Buffer.from(content),
+      headers: { "Content-Type": "text/plain" },
+    });
+  }
+
+  // Step 3: confirm the upload.
+  async completeUploadViaApi(documentId: string) {
+    return this.page.request.post(`/api/documents/${documentId}/complete`);
   }
 }

@@ -89,4 +89,103 @@ test.describe("project page", () => {
 
     expect((await projectPage.getViaApi(project.id)).status()).toBe(404);
   });
+
+  test.describe("document uploads", () => {
+    test("a member can upload a document, and it's stored in the bucket", async ({
+      testData,
+      loginAs,
+      projectPage,
+    }) => {
+      const client = await testData.createUser({ role: "CLIENT", name: "E2E Uploader" });
+      const project = await testData.createProject({ members: [client] });
+      const fileName = `${uniqueName("upload")}.txt`;
+      const content = `hello from ${fileName}`;
+
+      await loginAs(client);
+      await projectPage.goto(project.id);
+      await projectPage.waitUntilLoaded(project.name);
+      await projectPage.openTab("Documents");
+      await expect(projectPage.emptyState).toBeVisible();
+
+      await projectPage.upload(fileName, content);
+
+      await expect(projectPage.uploadStatus).toHaveText(`Uploaded ${fileName}.`);
+      await expect(projectPage.row(fileName)).toContainText("E2E Uploader");
+
+      const document = await testData.findDocument(project.id, fileName);
+      expect(document?.status).toBe("READY");
+      expect(document?.storageKey).toMatch(new RegExp(`^projects/${project.id}/`));
+      expect(await testData.objectSize(document!.storageKey)).toBe(Buffer.byteLength(content));
+    });
+
+    test("rejects files over 100 MB before anything is uploaded", async ({ testData, loginAs, projectPage }) => {
+      const client = await testData.createUser({ role: "CLIENT" });
+      const project = await testData.createProject({ members: [client] });
+
+      await loginAs(client);
+      const res = await projectPage.requestUploadViaApi(project.id, {
+        fileName: "huge.pdf",
+        sizeBytes: 100 * 1024 * 1024 + 1,
+      });
+      expect(res.status()).toBe(413);
+      expect(await testData.findDocument(project.id, "huge.pdf")).toBeNull();
+    });
+
+    test("a file with a different size than approved is rejected and discarded", async ({
+      testData,
+      loginAs,
+      projectPage,
+    }) => {
+      const client = await testData.createUser({ role: "CLIENT" });
+      const project = await testData.createProject({ members: [client] });
+      const fileName = `${uniqueName("liar")}.txt`;
+
+      await loginAs(client);
+      const res = await projectPage.requestUploadViaApi(project.id, { fileName, sizeBytes: 5 });
+      expect(res.status()).toBe(201);
+      const { documentId, uploadUrl } = await res.json();
+
+      // the upload URL is locked to 5 bytes, so the bucket refuses a bigger file
+      const put = await projectPage.putToBucket(uploadUrl, "way more than five bytes");
+      expect(put.ok()).toBe(false);
+
+      const complete = await projectPage.completeUploadViaApi(documentId);
+      expect(complete.status()).toBe(400);
+      expect(await testData.findDocument(project.id, fileName)).toBeNull();
+    });
+
+    test("unfinished uploads don't appear in the documents list", async ({ testData, loginAs, projectPage }) => {
+      const client = await testData.createUser({ role: "CLIENT" });
+      const project = await testData.createProject({ members: [client] });
+
+      await loginAs(client);
+      const res = await projectPage.requestUploadViaApi(project.id, { fileName: "pending.txt", sizeBytes: 10 });
+      expect(res.status()).toBe(201);
+
+      await projectPage.goto(project.id);
+      await projectPage.waitUntilLoaded(project.name);
+      await projectPage.openTab("Documents");
+      await expect(projectPage.emptyState).toBeVisible();
+    });
+
+    test("a non-member can't request or complete an upload", async ({
+      page,
+      testData,
+      loginAs,
+      projectPage,
+    }) => {
+      const member = await testData.createUser({ role: "CLIENT" });
+      const outsider = await testData.createUser({ role: "CLIENT" });
+      const project = await testData.createProject({ members: [member] });
+
+      await loginAs(member);
+      const res = await projectPage.requestUploadViaApi(project.id, { fileName: "mine.txt", sizeBytes: 10 });
+      const { documentId } = await res.json();
+
+      await page.context().clearCookies();
+      await loginAs(outsider);
+      expect((await projectPage.requestUploadViaApi(project.id, { fileName: "x.txt", sizeBytes: 10 })).status()).toBe(404);
+      expect((await projectPage.completeUploadViaApi(documentId)).status()).toBe(404);
+    });
+  });
 });

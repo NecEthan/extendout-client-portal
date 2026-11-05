@@ -1,7 +1,8 @@
 export interface ProjectDocument {
   id: string;
   fileName: string;
-  filePath: string;
+  storageKey: string;
+  status: "PENDING" | "READY";
   mimeType: string;
   sizeBytes: number;
   projectId: string;

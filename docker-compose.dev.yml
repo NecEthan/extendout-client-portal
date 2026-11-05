@@ -16,6 +16,29 @@ services:
       timeout: 5s
       retries: 10
 
+  # Local S3-compatible object storage (prod uses Backblaze B2). Dev-only credentials
+  # live in docker/seaweedfs/s3.json. S3 API on localhost:9000.
+  storage:
+    image: chrislusf/seaweedfs:4.50
+    restart: unless-stopped
+    command: server -s3 -s3.config=/etc/seaweedfs/s3.json -dir=/data
+    ports:
+      - "9000:8333"
+    volumes:
+      - storage_data_dev:/data
+      - ./docker/seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro
+
+  # One-shot: creates the private bucket (no-op if it already exists), then exits.
+  storage-init:
+    image: chrislusf/seaweedfs:4.50
+    depends_on:
+      - storage
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        until echo "s3.bucket.create -name portal-documents" | weed shell -master=storage:9333 2>&1 | grep -Eq "created bucket|already exists"; do sleep 1; done
+        echo "bucket portal-documents ready"
+
   web:
     build:
       context: .
@@ -24,15 +47,21 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      storage-init:
+        condition: service_completed_successfully
     environment:
       DATABASE_URL: postgresql://portal:portal@db:5432/portal
-      UPLOAD_DIR: /app/uploads
+      # Server talks to storage inside docker; browser-facing upload URLs are signed for localhost.
+      S3_ENDPOINT: http://storage:8333
+      S3_PUBLIC_ENDPOINT: http://localhost:9000
+      S3_REGION: us-east-1
+      S3_BUCKET: portal-documents
+      S3_ACCESS_KEY_ID: portal-dev
+      S3_SECRET_ACCESS_KEY: portal-dev-secret
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-dev-secret-change-me}
       BETTER_AUTH_URL: http://localhost:3000
     ports:
       - "3000:3000"
-    volumes:
-      - uploads_data_dev:/app/uploads
     # Run with: docker compose -f docker-compose.dev.yml up --watch
     # Source edits (incl. git stash/checkout) are synced into the container
     # and picked up by Next's hot reload — no rebuild or restart needed.
@@ -52,7 +81,6 @@ services:
             - node_modules/
             - .next/
             - .git/
-            - uploads/
             - test-results/
             - playwright-test/
             - package.json
@@ -61,4 +89,4 @@ services:
 
 volumes:
   db_data_dev:
-  uploads_data_dev:
+  storage_data_dev:

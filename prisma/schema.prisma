@@ -86,17 +86,23 @@ model Member {
   @@map("members")
 }
 
+enum DocumentStatus {
+  PENDING // upload URL issued, file not confirmed in the bucket yet
+  READY
+}
+
 model Document {
-  id           String   @id @default(uuid())
+  id           String         @id @default(uuid())
   fileName     String
-  filePath     String
+  storageKey   String         @unique // object key in the bucket, e.g. projects/<projectId>/<uuid>
+  status       DocumentStatus @default(PENDING)
   mimeType     String
   sizeBytes    Int
-  project      Project  @relation(fields: [projectId], references: [id])
+  project      Project        @relation(fields: [projectId], references: [id])
   projectId    String
-  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
+  uploadedBy   User           @relation(fields: [uploadedById], references: [id])
   uploadedById String
-  createdAt    DateTime @default(now())
+  createdAt    DateTime       @default(now())
 }
 
 enum Role {

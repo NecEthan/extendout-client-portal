@@ -10,3 +10,7 @@
   - delete `createAdmin` from `ApiRoutes.users` in `src/lib/apiRoutes.ts`
   - update the create-admin tests in `playwright-test/auth.spec.ts`
   - update the README auth section and the exceptions line in `CLAUDE.md`
+- [ ] Clean up abandoned uploads. If someone starts an upload and never finishes it, the `PENDING`
+  `Document` row stays (and still counts towards the upload limits in `src/lib/uploadLimits.ts`).
+  Add a cleanup job that deletes `PENDING` rows older than ~1 hour, plus any object already in the
+  bucket under their `storageKey`.

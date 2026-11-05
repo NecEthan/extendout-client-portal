@@ -88,11 +88,12 @@ async function main() {
       const exists = await prisma.document.findFirst({ where: { projectId: project.id, fileName } });
       if (exists) continue;
 
-      // Metadata only — no actual file is stored.
+      // Metadata only — no object is put in the bucket.
       await prisma.document.create({
         data: {
           fileName,
-          filePath: `seed-${fileName.replace(/[^a-zA-Z0-9.\-_]/g, "_")}`,
+          storageKey: `seed/${project.id}/${fileName.replace(/[^a-zA-Z0-9.\-_]/g, "_")}`,
+          status: "READY",
           mimeType: mimeTypes[fileName.split(".").pop()!] ?? "application/octet-stream",
           sizeBytes: 250_000,
           projectId: project.id,

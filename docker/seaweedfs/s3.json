@@ -1,0 +1,9 @@
+{
+  "identities": [
+    {
+      "name": "portal-dev",
+      "credentials": [{ "accessKey": "portal-dev", "secretKey": "portal-dev-secret" }],
+      "actions": ["Read", "Write", "List", "Tagging", "Admin"]
+    }
+  ]
+}

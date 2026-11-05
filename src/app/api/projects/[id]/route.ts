@@ -15,6 +15,7 @@ export async function GET(_req: Request, { params }: RouteParams) {
       where: { id, ...allowedProjectsWhere(session.user.id, session.user.portalRole) },
       include: {
         documents: {
+          where: { status: "READY" },
           orderBy: { createdAt: "desc" },
           include: { uploadedBy: { select: { name: true } } },
         },
