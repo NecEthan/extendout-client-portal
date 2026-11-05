@@ -21,7 +21,7 @@ export function Sidebar() {
   const logout = useLogout();
 
   return (
-    <aside className="flex h-screen w-64 shrink-0 flex-col justify-between bg-[#0a0a0a] px-4 py-6 text-white">
+    <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col justify-between bg-[#0a0a0a] px-4 py-6 text-white">
       <div>
         <div className="px-2 pb-8">
           <div className="text-xl font-extrabold tracking-tight">
