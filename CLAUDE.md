@@ -16,11 +16,12 @@ client component ──useX() hook──▶ /api/x route handler ──▶ Prism
 1. **Route handler** — `src/app/api/<resource>/route.ts`
    - First line inside `try`: `await requireSession()` or `await requireAdmin()` from
      `src/lib/session.ts`. These validate the session against the DB and throw
-     `UnauthorizedError` (401) / `ForbiddenError` (403).
-   - Validate input and throw `ValidationError` (400) for bad input.
+     `ApiError` with status 401 / 403.
+   - Validate input and throw `new ApiError(400, "...")` for bad input. Any other failure
+     status works the same way, e.g. `throw new ApiError(404, "Project not found")`.
    - Take user identity from the session, never from the request body.
-   - Wrap in `try { ... } catch (error) { return apiError(error); }` (`src/lib/apiResponse.ts`
-     maps those errors, plus Better Auth `APIError`s, to status codes).
+   - Wrap in `try { ... } catch (error) { return errorResponse(error); }` (`src/lib/apiResponse.ts`
+     maps `ApiError`, plus Better Auth `APIError`s, to status codes).
    - Never return secrets (e.g. session `token`) — use `select`.
    - Add the path to `ApiRoutes` in `src/lib/apiRoutes.ts`.
    - If two routes need the same query, extract it to `src/lib/` then — not before.

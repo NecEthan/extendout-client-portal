@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { apiError } from "@/lib/apiResponse";
+import { errorResponse } from "@/lib/apiResponse";
 import { requireSession } from "@/lib/session";
 
 export async function POST() {
@@ -13,6 +13,6 @@ export async function POST() {
     });
     return NextResponse.json({ ok: true });
   } catch (error) {
-    return apiError(error);
+    return errorResponse(error);
   }
 }

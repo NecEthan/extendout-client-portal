@@ -1,9 +1,9 @@
 "use client";
 
-import { FileText } from "lucide-react";
 import { useProjects } from "@/hooks/useProjects";
+import { ProjectCard } from "@/components/project/ProjectCard";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { formatDate } from "@/lib/formatDate";
+import { apiErrorMessage } from "@/lib/apiErrorMessage";
 
 export default function ProjectsPage() {
   const { data: projects, isPending, error } = useProjects();
@@ -15,7 +15,7 @@ export default function ProjectsPage() {
   if (error) {
     return (
       <Alert variant="destructive">
-        <AlertDescription>{error.message}</AlertDescription>
+        <AlertDescription>{apiErrorMessage(error)}</AlertDescription>
       </Alert>
     );
   }
@@ -32,31 +32,13 @@ export default function ProjectsPage() {
       {projects.length === 0 ? (
         <p className="text-sm text-muted-foreground">No projects yet.</p>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-border">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left text-muted-foreground">
-              <tr>
-                <th className="px-4 py-3 font-medium">Project</th>
-                <th className="px-4 py-3 font-medium">Documents</th>
-                <th className="px-4 py-3 text-right font-medium">Created</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {projects.map((project) => (
-                <tr key={project.id}>
-                  <td className="px-4 py-3 font-medium">{project.name}</td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    <span className="inline-flex items-center gap-1.5">
-                      <FileText className="h-3.5 w-3.5 text-primary" />
-                      {project.documents.length}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right text-muted-foreground">{formatDate(project.createdAt)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ul className="grid grid-cols-2 gap-4">
+          {projects.map((project) => (
+            <li key={project.id}>
+              <ProjectCard project={project} />
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );

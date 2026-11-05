@@ -88,7 +88,7 @@ async function main() {
       const exists = await prisma.document.findFirst({ where: { projectId: project.id, fileName } });
       if (exists) continue;
 
-      // Metadata only — no file is written to UPLOAD_DIR.
+      // Metadata only — no actual file is stored.
       await prisma.document.create({
         data: {
           fileName,

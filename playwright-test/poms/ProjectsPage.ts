@@ -24,17 +24,20 @@ export class ProjectsPage {
     return this.page.getByText("No projects yet.");
   }
 
-  // table body rows only (thead's row has no <td>)
-  get rows() {
-    return this.page.locator("tbody tr");
+  get cards() {
+    return this.page.getByRole("main").getByRole("listitem");
   }
 
-  row(projectName: string) {
-    return this.rows.filter({ has: this.page.getByRole("cell", { name: projectName, exact: true }) });
+  card(projectName: string) {
+    return this.cards.filter({ has: this.page.getByRole("heading", { name: projectName, exact: true }) });
+  }
+
+  link(projectName: string) {
+    return this.card(projectName).getByRole("link");
   }
 
   documentCount(projectName: string) {
-    return this.row(projectName).getByRole("cell").nth(1);
+    return this.card(projectName).getByTestId("document-count");
   }
 
   async createProject(name: string) {

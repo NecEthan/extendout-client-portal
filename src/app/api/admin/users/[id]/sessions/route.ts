@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { apiError } from "@/lib/apiResponse";
+import { errorResponse } from "@/lib/apiResponse";
 import { requireAdmin } from "@/lib/session";
 import type { RouteParams } from "@/types/routeParams-type";
 
@@ -17,7 +17,7 @@ export async function GET(_req: Request, { params }: RouteParams) {
     });
     return NextResponse.json(sessions);
   } catch (error) {
-    return apiError(error);
+    return errorResponse(error);
   }
 }
 
@@ -29,6 +29,6 @@ export async function DELETE(_req: Request, { params }: RouteParams) {
     await prisma.session.deleteMany({ where: { userId: id } });
     return NextResponse.json({ revoked: true });
   } catch (error) {
-    return apiError(error);
+    return errorResponse(error);
   }
 }

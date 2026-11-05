@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { apiError } from "@/lib/apiResponse";
-import { ValidationError } from "@/lib/errors";
+import { ApiError, errorResponse } from "@/lib/apiResponse";
 import { requireAdmin } from "@/lib/session";
 
 const ROLES = ["ADMIN", "CLIENT", "BUILDER"] as const;
@@ -18,7 +17,7 @@ export async function POST(req: NextRequest) {
       typeof password !== "string" ||
       !ROLES.includes(role)
     ) {
-      throw new ValidationError("email, name, password are required and role must be ADMIN, CLIENT or BUILDER");
+      throw new ApiError(400, "email, name, password are required and role must be ADMIN, CLIENT or BUILDER");
     }
 
     // Through Better Auth so the password is hashed and the Account row is created.
@@ -32,6 +31,6 @@ export async function POST(req: NextRequest) {
     });
     return NextResponse.json({ id: created.user.id, email: created.user.email }, { status: 201 });
   } catch (error) {
-    return apiError(error);
+    return errorResponse(error);
   }
 }

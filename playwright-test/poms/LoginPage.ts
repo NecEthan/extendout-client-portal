@@ -9,6 +9,8 @@ export class LoginPage {
 
   async goto() {
     await this.page.goto("/login");
+    // In dev, typing before React hydrates gets wiped when the controlled inputs mount.
+    await this.page.waitForLoadState("networkidle");
   }
 
   async login(email: string, password: string) {

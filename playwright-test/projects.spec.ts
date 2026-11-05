@@ -21,8 +21,8 @@ test.describe("projects page", () => {
     await projectsPage.goto();
     await projectsPage.waitUntilLoaded();
 
-    await expect(projectsPage.row(withMember.name)).toBeVisible();
-    await expect(projectsPage.row(withoutMembers.name)).toBeVisible();
+    await expect(projectsPage.card(withMember.name)).toBeVisible();
+    await expect(projectsPage.card(withoutMembers.name)).toBeVisible();
   });
 
   test("shows the document count for each project", async ({ testData, loginAs, projectsPage }) => {
@@ -38,9 +38,9 @@ test.describe("projects page", () => {
     await projectsPage.goto();
     await projectsPage.waitUntilLoaded();
 
-    await expect(projectsPage.documentCount(threeDocs.name)).toHaveText("3");
-    await expect(projectsPage.documentCount(oneDoc.name)).toHaveText("1");
-    await expect(projectsPage.documentCount(noDocs.name)).toHaveText("0");
+    await expect(projectsPage.documentCount(threeDocs.name)).toHaveText("3 documents");
+    await expect(projectsPage.documentCount(oneDoc.name)).toHaveText("1 document");
+    await expect(projectsPage.documentCount(noDocs.name)).toHaveText("0 documents");
   });
 
   test("clients and builders only see projects they're a member of", async ({
@@ -56,11 +56,13 @@ test.describe("projects page", () => {
     const kitchen = await testData.createProject({ members: [clientA, builder] });
     const garage = await testData.createProject({ members: [clientA] });
     const loft = await testData.createProject({ members: [clientB, builder] });
+    // everyone needs 2+ projects, otherwise /projects redirects them into their only one
+    const bathroom = await testData.createProject({ members: [clientB] });
 
     const cases = [
-      { user: clientA, sees: [kitchen, garage], hidden: [loft] },
-      { user: clientB, sees: [loft], hidden: [kitchen, garage] },
-      { user: builder, sees: [kitchen, loft], hidden: [garage] },
+      { user: clientA, sees: [kitchen, garage], hidden: [loft, bathroom] },
+      { user: clientB, sees: [loft, bathroom], hidden: [kitchen, garage] },
+      { user: builder, sees: [kitchen, loft], hidden: [garage, bathroom] },
     ];
 
     for (const { user, sees, hidden } of cases) {
@@ -70,12 +72,12 @@ test.describe("projects page", () => {
         await projectsPage.goto();
         await projectsPage.waitUntilLoaded();
 
-        await expect(projectsPage.rows).toHaveCount(sees.length);
+        await expect(projectsPage.cards).toHaveCount(sees.length);
         for (const project of sees) {
-          await expect(projectsPage.row(project.name)).toBeVisible();
+          await expect(projectsPage.card(project.name)).toBeVisible();
         }
         for (const project of hidden) {
-          await expect(projectsPage.row(project.name)).toHaveCount(0);
+          await expect(projectsPage.card(project.name)).toHaveCount(0);
         }
       });
     }
@@ -89,7 +91,7 @@ test.describe("projects page", () => {
     await projectsPage.waitUntilLoaded();
 
     await expect(projectsPage.emptyState).toBeVisible();
-    await expect(projectsPage.rows).toHaveCount(0);
+    await expect(projectsPage.cards).toHaveCount(0);
   });
 
   test("non-admin can't create a project", async ({ testData, loginAs, projectsPage }) => {
@@ -118,16 +120,15 @@ test.describe("projects page", () => {
 
     await projectsPage.goto();
     await projectsPage.waitUntilLoaded();
-    await expect(projectsPage.row(name)).toBeVisible();
-    await expect(projectsPage.documentCount(name)).toHaveText("0");
+    await expect(projectsPage.card(name)).toBeVisible();
+    await expect(projectsPage.documentCount(name)).toHaveText("0 documents");
 
-    // nobody is a member of the new project, so the client shouldn't see it
+    // nobody is a member of the new project, so the client still only has their one
+    // project, and /projects takes them straight into it
     await page.context().clearCookies();
     await loginAs(client);
     await projectsPage.goto();
-    await projectsPage.waitUntilLoaded();
-    await expect(projectsPage.row(clientsProject.name)).toBeVisible();
-    await expect(projectsPage.row(name)).toHaveCount(0);
+    await page.waitForURL(`**/projects/${clientsProject.id}`);
   });
 
   test("rejects creating a project without a name", async ({ testData, loginAs, projectsPage }) => {

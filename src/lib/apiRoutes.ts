@@ -12,9 +12,6 @@ export const ApiRoutes = {
   projects: {
     list: "/api/projects",
     create: "/api/projects",
-  },
-  documents: {
-    list: "/api/documents",
-    upload: "/api/documents",
+    get: (projectId: string) => `/api/projects/${projectId}`,
   },
 };

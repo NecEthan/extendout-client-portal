@@ -3,6 +3,7 @@ import { LoginPage } from "../poms/LoginPage";
 import { ChangePasswordPage } from "../poms/ChangePasswordPage";
 import { HomePage } from "../poms/HomePage";
 import { ProjectsPage } from "../poms/ProjectsPage";
+import { ProjectPage } from "../poms/ProjectPage";
 import { TestData, type TestUser } from "./testData";
 
 // This suite runs against the persistent dev database (the one behind docker compose)
@@ -14,6 +15,7 @@ type Fixtures = {
   changePasswordPage: ChangePasswordPage;
   homePage: HomePage;
   projectsPage: ProjectsPage;
+  projectPage: ProjectPage;
   testData: TestData;
   loginAs: (user: TestUser) => Promise<void>;
 };
@@ -30,6 +32,9 @@ export const test = base.extend<Fixtures>({
   },
   projectsPage: async ({ page }, use) => {
     await use(new ProjectsPage(page));
+  },
+  projectPage: async ({ page }, use) => {
+    await use(new ProjectPage(page));
   },
   testData: async ({}, use) => {
     const testData = new TestData();

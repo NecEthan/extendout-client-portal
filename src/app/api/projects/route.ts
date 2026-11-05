@@ -1,18 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { apiError } from "@/lib/apiResponse";
-import { ValidationError } from "@/lib/errors";
+import { ApiError, errorResponse } from "@/lib/apiResponse";
 import { requireAdmin, requireSession } from "@/lib/session";
+import { allowedProjectsWhere } from "@/lib/projectAccess";
 
 export async function GET() {
   try {
     const session = await requireSession();
 
-    const where =
-      session.user.portalRole === "ADMIN" ? {} : { members: { some: { userId: session.user.id } } };
-
     const projects = await prisma.project.findMany({
-      where,
+      where: allowedProjectsWhere(session.user.id, session.user.portalRole),
       orderBy: { createdAt: "desc" },
       include: {
         documents: {
@@ -23,7 +20,7 @@ export async function GET() {
     });
     return NextResponse.json(projects);
   } catch (error) {
-    return apiError(error);
+    return errorResponse(error);
   }
 }
 
@@ -34,12 +31,12 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { name } = body;
     if (typeof name !== "string" || name.trim() === "") {
-      throw new ValidationError("name is required");
+      throw new ApiError(400, "name is required");
     }
 
     const project = await prisma.project.create({ data: { name: name.trim() } });
     return NextResponse.json(project, { status: 201 });
   } catch (error) {
-    return apiError(error);
+    return errorResponse(error);
   }
 }
