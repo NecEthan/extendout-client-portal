@@ -76,6 +76,12 @@ Why presigned URLs instead of uploading through our backend:
 Only `READY` documents are listed. Limits (`src/lib/uploadLimits.ts`): 100 MB per file, 100 uploads
 per user per hour, 5 GB per project.
 
+**Photos** (Photos tab, construction progress) use the same flow and table, with `type: "PHOTO"` in
+step 1; the server only accepts JPEG, PNG, WebP and GIF for photos. They share the limits above with
+documents. `GET /api/projects/:id/photos` lists them, each with a presigned GET URL (valid 1 hour) so
+the browser can show them from the private bucket. In production the bucket's CORS rule doesn't need
+`GET`: `<img>` tags load cross-origin images without CORS.
+
 **Local dev:** `docker-compose.dev.yml` runs SeaweedFS (S3 API on `localhost:9000`) and creates the
 private `portal-documents` bucket automatically. Dev-only credentials are in `docker/seaweedfs/s3.json`.
 

@@ -91,11 +91,17 @@ enum DocumentStatus {
   READY
 }
 
+enum DocumentType {
+  DOCUMENT // Documents tab
+  PHOTO // Photos tab (construction progress), images only
+}
+
 model Document {
   id           String         @id @default(uuid())
   fileName     String
   storageKey   String         @unique // object key in the bucket, e.g. projects/<projectId>/<uuid>
   status       DocumentStatus @default(PENDING)
+  type         DocumentType   @default(DOCUMENT)
   mimeType     String
   sizeBytes    Int
   project      Project        @relation(fields: [projectId], references: [id])

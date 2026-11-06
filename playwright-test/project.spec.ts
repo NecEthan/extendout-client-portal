@@ -188,4 +188,64 @@ test.describe("project page", () => {
       expect((await projectPage.completeUploadViaApi(documentId)).status()).toBe(404);
     });
   });
+
+  test.describe("photos", () => {
+    test("a member can upload photos, and they show in Photos but not Documents", async ({
+      page,
+      testData,
+      loginAs,
+      projectPage,
+    }) => {
+      const builder = await testData.createUser({ role: "BUILDER", name: "E2E Builder" });
+      const project = await testData.createProject({ members: [builder] });
+      const first = `${uniqueName("slab")}.png`;
+      const second = `${uniqueName("framing")}.png`;
+
+      await loginAs(builder);
+      await projectPage.goto(project.id);
+      await projectPage.waitUntilLoaded(project.name);
+      await projectPage.openTab("Photos");
+      await expect(projectPage.photosEmptyState).toBeVisible();
+
+      await projectPage.uploadPhotos([first, second]);
+
+      await expect(projectPage.uploadStatus).toHaveText("Uploaded 2 photos.");
+      for (const name of [first, second]) {
+        const img = projectPage.photo(name);
+        await expect(img).toBeVisible();
+        // Actually loaded from the bucket through the presigned URL, not a broken image
+        await expect.poll(() => img.evaluate((el: HTMLImageElement) => el.naturalWidth)).toBe(1);
+        expect((await testData.findDocument(project.id, name))?.type).toBe("PHOTO");
+      }
+      await expect(page.getByText("E2E Builder ·").first()).toBeVisible();
+
+      await projectPage.openTab("Documents");
+      await expect(projectPage.emptyState).toBeVisible();
+      const { documents } = await (await projectPage.getViaApi(project.id)).json();
+      expect(documents).toHaveLength(0);
+    });
+
+    test("only accepts image types for photos", async ({ testData, loginAs, projectPage }) => {
+      const client = await testData.createUser({ role: "CLIENT" });
+      const project = await testData.createProject({ members: [client] });
+
+      await loginAs(client);
+      const res = await projectPage.requestUploadViaApi(project.id, {
+        fileName: "notes.html",
+        sizeBytes: 10,
+        mimeType: "text/html",
+        type: "PHOTO",
+      });
+      expect(res.status()).toBe(400);
+      expect(await testData.findDocument(project.id, "notes.html")).toBeNull();
+    });
+
+    test("a non-member can't list a project's photos", async ({ testData, loginAs, projectPage }) => {
+      const outsider = await testData.createUser({ role: "CLIENT" });
+      const project = await testData.createProject();
+
+      await loginAs(outsider);
+      expect((await projectPage.getPhotosViaApi(project.id)).status()).toBe(404);
+    });
+  });
 });

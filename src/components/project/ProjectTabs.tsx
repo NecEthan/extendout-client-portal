@@ -36,7 +36,7 @@ export function ProjectTabs({ project }: { project: Project }) {
       <div role="tabpanel">
         {activeTab === "Overview" && <OverviewTab />}
         {activeTab === "Documents" && <DocumentsTab project={project} />}
-        {activeTab === "Photos" && <PhotosTab />}
+        {activeTab === "Photos" && <PhotosTab projectId={project.id} />}
         {activeTab === "People" && <PeopleTab />}
       </div>
     </div>

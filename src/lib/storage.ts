@@ -1,11 +1,18 @@
 import "server-only";
-import { DeleteObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  HeadObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 // S3-compatible object storage: MinIO locally (docker-compose.dev.yml), Backblaze B2 in prod.
-// The bucket is private; the browser only ever gets short-lived presigned upload URLs.
+// The bucket is private; the browser only ever gets short-lived presigned URLs.
 
 const UPLOAD_URL_TTL_SECONDS = 10 * 60;
+const VIEW_URL_TTL_SECONDS = 60 * 60;
 
 function requireEnv(name: string) {
   const value = process.env[name];
@@ -51,6 +58,13 @@ export async function createUploadUrl(key: string, mimeType: string, sizeBytes: 
     expiresIn: UPLOAD_URL_TTL_SECONDS,
     signableHeaders: new Set(["content-type", "content-length"]),
   });
+}
+
+// Presigned GET for viewing a file (e.g. a photo in an <img>). Only hand these out after an
+// access check: anyone holding the URL can open the file until it expires.
+export async function createViewUrl(key: string) {
+  const command = new GetObjectCommand({ Bucket: BUCKET, Key: key });
+  return getSignedUrl(publicClient, command, { expiresIn: VIEW_URL_TTL_SECONDS });
 }
 
 // Size of a stored object, or null if it doesn't exist.

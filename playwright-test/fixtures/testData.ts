@@ -91,7 +91,7 @@ export class TestData {
   async findDocument(projectId: string, fileName: string) {
     return prisma.document.findFirst({
       where: { projectId, fileName },
-      select: { id: true, storageKey: true, status: true, sizeBytes: true },
+      select: { id: true, storageKey: true, status: true, sizeBytes: true, type: true },
     });
   }
 

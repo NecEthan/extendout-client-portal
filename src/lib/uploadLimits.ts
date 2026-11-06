@@ -26,7 +26,8 @@ export async function assertCanUpload(
   if (sizeBytes > MAX_FILE_BYTES) {
     throw new ApiError(413, "File is too large (max 100 MB)");
   }
-
+// Lock the user and project rows (nothing is updated) so concurrent uploads for the same user or
+// project take turns: each one counts existing uploads only after the previous one has inserted.
   await tx.$executeRaw`SELECT 1 FROM "User" WHERE id = ${userId} FOR NO KEY UPDATE`;
   await tx.$executeRaw`SELECT 1 FROM "Project" WHERE id = ${projectId} FOR NO KEY UPDATE`;
 

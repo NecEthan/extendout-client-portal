@@ -55,6 +55,30 @@ export class ProjectPage {
     await this.uploadButton.click();
   }
 
+  get photosEmptyState() {
+    return this.page.getByText("No photos yet.");
+  }
+
+  // A 1x1 PNG per name, so the browser can actually render them.
+  async uploadPhotos(fileNames: string[]) {
+    const png = Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+      "base64",
+    );
+    await this.page
+      .getByLabel("Photos")
+      .setInputFiles(fileNames.map((name) => ({ name, mimeType: "image/png", buffer: png })));
+    await this.uploadButton.click();
+  }
+
+  photo(fileName: string) {
+    return this.page.getByRole("img", { name: fileName });
+  }
+
+  async getPhotosViaApi(projectId: string) {
+    return this.page.request.get(`/api/projects/${projectId}/photos`);
+  }
+
   get rows() {
     return this.page.locator("tbody tr");
   }
@@ -68,9 +92,12 @@ export class ProjectPage {
   }
 
   // Step 1 of an upload: ask for a presigned URL.
-  async requestUploadViaApi(projectId: string, file: { fileName: string; sizeBytes: number }) {
+  async requestUploadViaApi(
+    projectId: string,
+    file: { fileName: string; sizeBytes: number; mimeType?: string; type?: "DOCUMENT" | "PHOTO" },
+  ) {
     return this.page.request.post(`/api/projects/${projectId}/documents`, {
-      data: { ...file, mimeType: "text/plain" },
+      data: { mimeType: "text/plain", ...file },
     });
   }
 
